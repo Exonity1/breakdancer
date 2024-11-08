@@ -7,6 +7,8 @@ import CannonDebugger from 'cannon-es-debugger'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js';
+import { SSRPass } from 'three/addons/postprocessing/SSRPass.js';
 
 
 
@@ -37,8 +39,26 @@ const bloomPass = new UnrealBloomPass(
   1,    // radius
   2    // threshold
 );
-composer.addPass(bloomPass);
+//composer.addPass(bloomPass);
 
+const ssaoPass = new SSAOPass(scene, camera, window.innerWidth, window.innerHeight);
+ssaoPass.kernelRadius = 0.4; // Adjust the radius for the spread of shadows
+ssaoPass.minDistance = 0.005;
+ssaoPass.maxDistance = 0.5;
+composer.addPass(ssaoPass);
+const ssrPass = new SSRPass({
+    renderer,
+    scene,
+    camera: camera,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    groundReflector: null, // Optionally, add a plane for specific reflections like water
+    selects: null, // Optionally, specify which objects should have reflections
+    opacity: 1.0,
+    thickness: 0.518,
+    maxDistance: 5,
+});
+//composer.addPass(ssrPass);
 
 
 let plateSpeed = 0;
