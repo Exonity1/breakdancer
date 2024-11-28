@@ -1015,13 +1015,13 @@ const slider2 = document.getElementById('slider2');
 slider1.addEventListener('input', () => {
     const value = parseFloat(slider1.value);
     
-    plateSpeed = value * 0.001 *1.39 *1.25;
+    plateSpeed = value * 0.001 *1.39 *-1.25;
 });
 
 slider2.addEventListener('input', () => {
     const value = parseFloat(slider2.value);
     
-    gondelSpeed = value * 0.001 * 3.5 *1.2;  
+    gondelSpeed = value * 0.001 * 3.5 *-1.2;  
 
 });
 
