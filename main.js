@@ -17,10 +17,24 @@ import { LoaderHelper } from './LoaderHelper.js';
 let lastTime = Date.now(); 
 let deltaTime = 0;
 let fps = 0;
-let loadedclass = new LoaderHelper(6, hideLoadingScreen);
+let loadedclass = new LoaderHelper(20, hideLoadingScreen);
+//Intialise the general variables 
+let plateSpeed = 0;
+let gondelSpeed = 0;
+let gondelKreuze = [];
+let gondeln = [];
+let environment;
+let basedisc
 
 
 
+function loadGondelModels(){
+    
+}
+
+
+
+window.addEventListener('resize', onWindowResize, false);
 const switchElement1 = document.getElementById('mySwitch1');
 const switchElement2 = document.getElementById('mySwitch2');
 
@@ -55,6 +69,15 @@ composerPOV.addPass(renderPassPOV);
 
 startFunctions();
 
+
+loadBaseDisc();
+
+function loadBaseDisc(){
+    basedisc = loadModel('models/breakerDisc.glb');
+    scene.add(basedisc);
+}
+
+
 hideLoadingScreen();
 
 function animate() {
@@ -63,7 +86,7 @@ function animate() {
     world.step(1 / 60, deltaTime, 10);
     
     //renderer.render(scene, camera);
-    if (switchElement1.checked){
+    if (!switchElement1.checked){
         composer.render();
     }else{
         composerPOV.render();
@@ -74,14 +97,17 @@ function animate() {
 
     controls.update();
     
+    gondeln.forEach(gondel => {
+        syncObjectWithBody(gondel.gondelBody, gondel.gondelPhysicsBody);
+    });
 
-    //syncObjectWithBody(ThreeCarBody, car.carBody);
-    
     updateFPS();
 }
 
-
-
+let testGondel = {
+    gondelBody: new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 })),
+    gondelPhysicsBody: new CANNON.Body({ mass: 1 }),
+}
 
 
 function updateFPS() {
@@ -117,10 +143,6 @@ function syncObjectWithBody(threeObject, cannonBody) {
     threeObject.position.copy(cannonBody.position);
     threeObject.quaternion.copy(cannonBody.quaternion);
 }
-
-window.addEventListener('resize', onWindowResize, false);
-
-
 
 function onWindowResize() {
     const width = window.innerWidth;
@@ -160,29 +182,23 @@ function errorAlert(){
     document.getElementById('loadingstuff').style.color = "red";
 }
 
-
-/*
-function loadStreetModel() {
+function loadModel(path) {
 
     gLTFloader.load(
-
-        'models/streetassetver3.glb',
-
-
+        path,
+        //called on finished loading
         function(gltf) {
             console.log("Model loaded");
-            const model = gltf.scene;
+            let model = gltf.scene;
             model.castShadow = true;
             model.receiveShadow = true;
-            groundPlane1 = model;
-            setStreet();
             loadedclass.add();
+            return model;
         },
         // Called while loading is progressing
-        function(xhr) {
+        function() {
             refreshLoadingScreen();
         },
-
         // Called when loading has errors
         function(error) {
             console.log('An error happened', error);
@@ -190,7 +206,6 @@ function loadStreetModel() {
         }
     );
 }
-*/
 
 function startFunctions(){
     

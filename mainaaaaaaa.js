@@ -75,7 +75,6 @@ const ssrPass = new SSRPass({
 
 
 let plateSpeed = 0;
-
 let gondelSpeed = 0;
 
 
