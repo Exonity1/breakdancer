@@ -162,7 +162,7 @@ async function loadBaseDisc(){
 }
 
 async function loadBackgroundScene(){
-    environment = await loadModel('models/breakerbackgrund.glb');
+    environment = await loadModel('models/breakerBackground1.glb');
     scene.add(environment);
     loadedclass.add();
 }
@@ -171,7 +171,7 @@ async function loadGondelModels(){
     for(let i = 0; i < 16; i++){
         let gondel = {
             gondelBody: await loadModel('models/breakerGondel.glb'),
-            gondelPhysicsBody: new CANNON.Body({ mass: 250, shape: new CANNON.Box(new CANNON.Vec3(1, 0.6, 0.6)) })
+            gondelPhysicsBody: new CANNON.Body({ mass: 250, shape: new CANNON.Box(new CANNON.Vec3(0.75, 0.45, 0.45)) })
         }
         gondeln.push(gondel);
         scene.add(gondel.gondelBody);
