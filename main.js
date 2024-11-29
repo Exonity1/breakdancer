@@ -17,22 +17,18 @@ import { LoaderHelper } from './LoaderHelper.js';
 let lastTime = Date.now(); 
 let deltaTime = 0;
 let fps = 0;
-let loadedclass = new LoaderHelper(20, hideLoadingScreen);
+let loadedclass = new LoaderHelper(22, hideLoadingScreenAndStart);
 //Intialise the general variables 
 let plateSpeed = 0;
 let gondelSpeed = 0;
 let gondelKreuze = [];
 let gondeln = [];
 let environment;
-let basedisc
-
-
-
-function loadGondelModels(){
-    
-}
-
-
+let basedisc;
+let base;
+let baseHingeConstraint;
+let kreuzHingeConstraints = [];
+let gondelHingeConstraints = {};
 
 window.addEventListener('resize', onWindowResize, false);
 const switchElement1 = document.getElementById('mySwitch1');
@@ -44,6 +40,7 @@ const scene = new THREE.Scene();
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
 world.solver.iterations = 20;
 world.solver.tolerance = 0.001;
+world.allowSleep = false;
 const gLTFloader = new GLTFLoader();
 const cannonDebugger = new CannonDebugger(scene, world, {})
 document.body.appendChild(renderer.domElement);
@@ -66,22 +63,142 @@ const renderPassPOV = new RenderPass(scene, cameraPOV);
 composerPOV.addPass(renderPassPOV);
 
 
+function innitPhysics(){
+    base = new CANNON.Body({
+        mass: 0,
+        shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
+        position: new CANNON.Vec3(0, 2.3, 0)
+    });
+    world.addBody(base);
 
-startFunctions();
+    createBaseHinge();
 
+    createKreuzHinges();
 
-loadBaseDisc();
+    createGondelHinges();
+}
 
-function loadBaseDisc(){
-    basedisc = loadModel('models/breakerDisc.glb');
-    scene.add(basedisc);
+function createKreuzHinges(){
+    const kreuzHingeParams = [
+        { pivotA: new CANNON.Vec3(6, 0.2, 0)},
+        { pivotA: new CANNON.Vec3(0, 0.2, 6)},
+        { pivotA: new CANNON.Vec3(-6, 0.2, 0)},
+        { pivotA: new CANNON.Vec3(0, 0.2, -6)}
+    ];
+
+    gondelKreuze.forEach((kreuz, index) => {
+        const kreuzHingeConstraint = new CANNON.HingeConstraint(basedisc.body, kreuz.kreuzPhysicsBody, {
+            pivotA: kreuzHingeParams[index].pivotA, // Center of the top face of the box
+            axisA: new CANNON.Vec3(0, 1, 0), // Axis of rotation for the box
+            pivotB: new CANNON.Vec3(0, 0.2, 0), // Center of the bottom face of the cylinder
+            axisB: new CANNON.Vec3(0, 1, 0), // Axis of rotation for the cylinder
+        });
+        kreuzHingeConstraint.enableMotor();
+        kreuzHingeConstraint.setMotorSpeed(gondelSpeed);
+        kreuzHingeConstraint.setMotorMaxForce(400);
+        world.addConstraint(kreuzHingeConstraint);
+        kreuzHingeConstraints.push(kreuzHingeConstraint);
+    });
+}
+
+function createBaseHinge(){
+    const plateHingeConstraint = new CANNON.HingeConstraint(base, basedisc.body, {
+        pivotA: new CANNON.Vec3(0, 0.5, 0), // Center of the top face of the box
+        axisA: new CANNON.Vec3(0, 1, 0.12), // Axis of rotation for the box
+        pivotB: new CANNON.Vec3(0, -0.5, 0), // Center of the bottom face of the cylinder
+        axisB: new CANNON.Vec3(0, 1, 0), // Axis of rotation for the cylinder
+    });
+    plateHingeConstraint.enableMotor();
+    plateHingeConstraint.setMotorSpeed(plateSpeed);
+    plateHingeConstraint.setMotorMaxForce(120000);
+    plateHingeConstraint.collideConnected = false;
+    world.addConstraint(plateHingeConstraint);
+    baseHingeConstraint = plateHingeConstraint;
+}
+
+function createGondelHinges() {
+    const gondelHingeParams = [
+        { pivotA: new CANNON.Vec3(3.4, 0.8, 0), axisA: new CANNON.Vec3(-0.3, 1, 0) },
+        { pivotA: new CANNON.Vec3(-3.4, 0.8, 0), axisA: new CANNON.Vec3(0.3, 1, 0) },
+        { pivotA: new CANNON.Vec3(0, 0.8, 3.4), axisA: new CANNON.Vec3(0, 1, -0.3) },
+        { pivotA: new CANNON.Vec3(0, 0.8, -3.4), axisA: new CANNON.Vec3(0, 1, 0.3) }
+    ];
+
+    let i = 0;
+
+    gondelKreuze.forEach((kreuz) => {
+        for(let j = 0; j < 4; j++){
+            const gondelHingeConstraint = new CANNON.HingeConstraint(kreuz.kreuzPhysicsBody, gondeln[i].gondelPhysicsBody, {
+                pivotA: gondelHingeParams[j].pivotA, 
+                axisA: gondelHingeParams[j].axisA,  
+                pivotB: new CANNON.Vec3(0.2, -0.5, 0), 
+                axisB: new CANNON.Vec3(0, 1, 0), 
+            });
+            world.addConstraint(gondelHingeConstraint);
+            kreuzHingeConstraints.push(gondelHingeConstraint);
+            i++
+        }
+    });
+    
 }
 
 
-hideLoadingScreen();
+
+
+
+startFunctions();
+
+async function loadBaseDisc(){
+    // Create cylinder
+    const cylinderShape = new CANNON.Cylinder(10, 10, 0.1, 12);
+    const cylinderBody = new CANNON.Body({ mass: 12000, shape: cylinderShape });
+    basedisc = {
+        model: await loadModel('models/breakerDisc.glb'),
+        body: cylinderBody
+    };
+    scene.add(basedisc.model);
+    world.addBody(basedisc.body);
+    loadedclass.add();
+}
+
+async function loadBackgroundScene(){
+    environment = await loadModel('models/breakerbackgrund.glb');
+    scene.add(environment);
+    loadedclass.add();
+}
+
+async function loadGondelModels(){
+    for(let i = 0; i < 16; i++){
+        let gondel = {
+            gondelBody: await loadModel('models/breakerGondel.glb'),
+            gondelPhysicsBody: new CANNON.Body({ mass: 250, shape: new CANNON.Box(new CANNON.Vec3(1, 0.6, 0.6)) })
+        }
+        gondeln.push(gondel);
+        scene.add(gondel.gondelBody);
+        world.addBody(gondel.gondelPhysicsBody);
+        loadedclass.add();
+    }
+}
+
+async function loadKreuze(){
+    for(let i = 0; i < 4; i++){
+        let kreuz = {
+            kreuzBody: await loadModel('models/breakerKreuz.glb'),
+            kreuzPhysicsBody: new CANNON.Body({ mass: 1000, shape: new CANNON.Cylinder(4, 4, 0.1, 12), collisionFilterGroup: 0, collisionFilterMask: 0 })
+        }
+        gondelKreuze.push(kreuz);
+        scene.add(kreuz.kreuzBody);
+        world.addBody(kreuz.kreuzPhysicsBody);
+        loadedclass.add();
+    }
+}
+
+
+
 
 function animate() {
     requestAnimationFrame(animate);
+    cannonDebugger.update();
     
     world.step(1 / 60, deltaTime, 10);
     
@@ -95,20 +212,36 @@ function animate() {
         cannonDebugger.update();
     }
 
-    controls.update();
-    
-    gondeln.forEach(gondel => {
-        syncObjectWithBody(gondel.gondelBody, gondel.gondelPhysicsBody);
-    });
 
+    controls.update();
+    driveBreaker();
+    syncBodies();
     updateFPS();
 }
 
-let testGondel = {
-    gondelBody: new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 })),
-    gondelPhysicsBody: new CANNON.Body({ mass: 1 }),
+
+
+
+
+
+
+function syncBodies(){
+    syncObjectWithBody(basedisc.model, basedisc.body);
+    gondelKreuze.forEach(kreuz => {
+        syncObjectWithBody(kreuz.kreuzBody, kreuz.kreuzPhysicsBody);
+    });
+    gondeln.forEach(gondel => {
+        syncObjectWithBody(gondel.gondelBody, gondel.gondelPhysicsBody);
+    });
 }
 
+function driveBreaker(){
+    kreuzHingeConstraints.forEach((constraint) => {
+        constraint.setMotorSpeed(gondelSpeed);
+    });
+    baseHingeConstraint.setMotorSpeed(plateSpeed);
+
+}    
 
 function updateFPS() {
     const now = Date.now();
@@ -128,14 +261,14 @@ function loadHDRI(path) {
     const hdriLoader = new RGBELoader();
 
     hdriLoader.load(path, function(texture) {
-    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-    texture.dispose();
-    pmremGenerator.dispose();
-    scene.environment = envMap;
-    scene.background = envMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.3;
-});
+        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+        texture.dispose();
+        pmremGenerator.dispose();
+        scene.environment = envMap;
+        scene.background = envMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 0.3;
+    });
 
 }
 
@@ -162,18 +295,18 @@ function onWindowResize() {
     //ssrPassPOV.setSize(width, height);
 }
 
-
-function hideLoadingScreen() {
+function hideLoadingScreenAndStart() {
     document.getElementById('loadingdiv').style.display = 'none';
+    innitPhysics();
     animate();
 }
 
 function refreshLoadingScreen(){
     let loadingText = document.getElementById('loadingstuff');
-    if(loadingText.innerText === "Stuff is Still Loading /"){
-        loadingText.innerText = "Stuff is Still Loading -";
+    if(loadingText.innerText === "- Stuff is Still Loading /"){
+        loadingText.innerText = "/ Stuff is Still Loading -";
     }else{
-        loadingText.innerText = "Stuff is Still Loading /";
+        loadingText.innerText = "- Stuff is Still Loading /";
     }
 }
 
@@ -182,32 +315,38 @@ function errorAlert(){
     document.getElementById('loadingstuff').style.color = "red";
 }
 
-function loadModel(path) {
-
-    gLTFloader.load(
-        path,
-        //called on finished loading
-        function(gltf) {
-            console.log("Model loaded");
-            let model = gltf.scene;
-            model.castShadow = true;
-            model.receiveShadow = true;
-            loadedclass.add();
-            return model;
-        },
-        // Called while loading is progressing
-        function() {
-            refreshLoadingScreen();
-        },
-        // Called when loading has errors
-        function(error) {
-            console.log('An error happened', error);
-            errorAlert();
-        }
-    );
+async function loadModel(path) {
+    try {
+        const gltf = await gLTFloader.loadAsync(path, refreshLoadingScreen);
+        console.log("Model loaded");
+        let model = gltf.scene;
+        model.castShadow = true;
+        model.receiveShadow = true;
+        return model;
+    } catch (error) {
+        console.log('An error happened', error);
+        errorAlert();
+        throw error;
+    }
 }
 
 function startFunctions(){
-    
+    loadGondelModels();
+    loadKreuze();
+    loadBaseDisc();
+    loadBackgroundScene();
     loadHDRI('textures/hdri/nightsky.hdr');
 }
+
+slider1.addEventListener('input', () => {
+    const value = parseFloat(slider1.value);
+    
+    plateSpeed = value * 0.001 *1.39 *-1.25;
+});
+
+slider2.addEventListener('input', () => {
+    const value = parseFloat(slider2.value);
+    
+    gondelSpeed = value * 0.001 * 3.5 *1.2;  
+
+});
