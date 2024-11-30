@@ -17,7 +17,7 @@ import { LoaderHelper } from './LoaderHelper.js';
 let lastTime = Date.now(); 
 let deltaTime = 0;
 let fps = 0;
-let loadedclass = new LoaderHelper(22, hideLoadingScreenAndStart);
+let loadedclass = new LoaderHelper(2, hideLoadingScreenAndStart);
 //Intialise the general variables 
 let plateSpeed = 0;
 let gondelSpeed = 0;
@@ -36,6 +36,7 @@ const switchElement2 = document.getElementById('mySwitch2');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, shadowMap: { enabled: true, type: THREE.PCFSoftShadowMap } });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
 const scene = new THREE.Scene();
 const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
 world.solver.iterations = 20;
@@ -63,19 +64,26 @@ const renderPassPOV = new RenderPass(scene, cameraPOV);
 composerPOV.addPass(renderPassPOV);
 
 
+
+startFunctions();
+
+
+
+
+
 function innitPhysics(){
     base = new CANNON.Body({
         mass: 0,
         shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
-        position: new CANNON.Vec3(0, 2.3, 0)
+        position: new CANNON.Vec3(0, 1.3, 0)
     });
     world.addBody(base);
 
     createBaseHinge();
 
-    createKreuzHinges();
+    //createKreuzHinges();
 
-    createGondelHinges();
+    //createGondelHinges();
 }
 
 function createKreuzHinges(){
@@ -142,18 +150,12 @@ function createGondelHinges() {
     
 }
 
-
-
-
-
-startFunctions();
-
 async function loadBaseDisc(){
     // Create cylinder
-    const cylinderShape = new CANNON.Cylinder(10, 10, 0.1, 12);
+    const cylinderShape = new CANNON.Cylinder(8, 8, 0.1, 12);
     const cylinderBody = new CANNON.Body({ mass: 12000, shape: cylinderShape });
     basedisc = {
-        model: await loadModel('models/breakerDisc.glb'),
+        model: await loadModel('models/DancerDisc.glb'),
         body: cylinderBody
     };
     scene.add(basedisc.model);
@@ -198,7 +200,7 @@ async function loadKreuze(){
 
 function animate() {
     requestAnimationFrame(animate);
-    cannonDebugger.update();
+    //cannonDebugger.update();
     
     world.step(1 / 60, deltaTime, 10);
     
@@ -240,7 +242,6 @@ function driveBreaker(){
         constraint.setMotorSpeed(gondelSpeed);
     });
     baseHingeConstraint.setMotorSpeed(plateSpeed);
-
 }    
 
 function updateFPS() {
@@ -264,7 +265,7 @@ function loadHDRI(path) {
         const envMap = pmremGenerator.fromEquirectangular(texture).texture;
         texture.dispose();
         pmremGenerator.dispose();
-        scene.environment = envMap;
+        //scene.environment = envMap;
         scene.background = envMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 0.3;
@@ -331,11 +332,20 @@ async function loadModel(path) {
 }
 
 function startFunctions(){
-    loadGondelModels();
-    loadKreuze();
+    //loadGondelModels();
+    //loadKreuze();
     loadBaseDisc();
     loadBackgroundScene();
     loadHDRI('textures/hdri/nightsky.hdr');
+    createSunLight();
+}
+
+document.getElementById('resetButton').addEventListener('click', resetVelocity);
+
+function resetVelocity() {
+    gondeln.forEach(gondel => {;
+        gondel.gondelPhysicsBody.angularVelocity.set(0,0,0);
+    });
 }
 
 slider1.addEventListener('input', () => {
@@ -350,3 +360,20 @@ slider2.addEventListener('input', () => {
     gondelSpeed = value * 0.001 * 3.5 *1.2;  
 
 });
+
+function createSunLight(){
+    const sunLight = new THREE.DirectionalLight(0x5a729e, 6.5);
+    sunLight.position.set(10, 10, 10);
+    sunLight.target.position.set(0, 0, 0);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.top = 1000;
+    sunLight.shadow.camera.bottom = -1000;
+    sunLight.shadow.camera.left = -1000;
+    sunLight.shadow.camera.right = 1000;
+    sunLight.shadow.camera.near = 0.100;
+    sunLight.shadow.camera.far = 10000;
+    scene.add(sunLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+}
