@@ -111,7 +111,7 @@ function createBaseHinge(){
     });
     plateHingeConstraint.enableMotor();
     plateHingeConstraint.setMotorSpeed(plateSpeed);
-    plateHingeConstraint.setMotorMaxForce(60000);
+    plateHingeConstraint.setMotorMaxForce(6000);
     plateHingeConstraint.collideConnected = false;
     world.addConstraint(plateHingeConstraint);
     baseHingeConstraint = plateHingeConstraint;
