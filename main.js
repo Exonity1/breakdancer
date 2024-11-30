@@ -81,10 +81,10 @@ function innitPhysics(){
 
 function createKreuzHinges(){
     const kreuzHingeParams = [
-        { pivotA: new CANNON.Vec3(5, 0.25, 0)},
-        { pivotA: new CANNON.Vec3(0, 0.25, 5)},
-        { pivotA: new CANNON.Vec3(-5, 0.25, 0)},
-        { pivotA: new CANNON.Vec3(0, 0.25, -5)}
+        { pivotA: new CANNON.Vec3(4.75, 0.25, 0)},
+        { pivotA: new CANNON.Vec3(0, 0.25, 4.75)},
+        { pivotA: new CANNON.Vec3(-4.75, 0.25, 0)},
+        { pivotA: new CANNON.Vec3(0, 0.25, -4.75)}
     ];
 
     gondelKreuze.forEach((kreuz, index) => {
@@ -119,10 +119,10 @@ function createBaseHinge(){
 
 function createGondelHinges() {
     const gondelHingeParams = [
-        { pivotA: new CANNON.Vec3(2, 0.2, 0), axisA: new CANNON.Vec3(-0.3, 1, 0) },
-        { pivotA: new CANNON.Vec3(-2, 0.2, 0), axisA: new CANNON.Vec3(0.3, 1, 0) },
-        { pivotA: new CANNON.Vec3(0, 0.2, 2), axisA: new CANNON.Vec3(0, 1, -0.3) },
-        { pivotA: new CANNON.Vec3(0, 0.2, -2), axisA: new CANNON.Vec3(0, 1, 0.3) }
+        { pivotA: new CANNON.Vec3(2, 0.3, 0), axisA: new CANNON.Vec3(-0.3, 1, 0) },
+        { pivotA: new CANNON.Vec3(-2, 0.3, 0), axisA: new CANNON.Vec3(0.3, 1, 0) },
+        { pivotA: new CANNON.Vec3(0, 0.3, 2), axisA: new CANNON.Vec3(0, 1, -0.3) },
+        { pivotA: new CANNON.Vec3(0, 0.3, -2), axisA: new CANNON.Vec3(0, 1, 0.3) }
     ];
 
     let i = 0;
@@ -345,7 +345,7 @@ function resetVelocity() {
 slider1.addEventListener('input', () => {
     const value = parseFloat(slider1.value);
     
-    plateSpeed = value * 0.001 *1.39 *-1.25 *0.7;
+    plateSpeed = value * 0.001 *1.39 *-1.25;
 });
 
 slider2.addEventListener('input', () => {
