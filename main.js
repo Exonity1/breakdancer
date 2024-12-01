@@ -17,18 +17,19 @@ import { LoaderHelper } from './LoaderHelper.js';
 let lastTime = Date.now(); 
 let deltaTime = 0;
 let fps = 0;
-let loadedclass = new LoaderHelper(21, hideLoadingScreenAndStart);
+let loadedclass = new LoaderHelper(23, hideLoadingScreenAndStart);
 //Intialise the general variables 
 let plateSpeed = 0;
 let gondelSpeed = 0;
 let gondelKreuze = [];
 let gondeln = [];
 let environment;
+let cubeTower
 let basedisc;
 let base;
 let baseHingeConstraint;
 let kreuzHingeConstraints = [];
-let gondelHingeConstraints = {};
+let gondelHingeConstraints = [];
 
 window.addEventListener('resize', onWindowResize, false);
 const switchElement1 = document.getElementById('mySwitch1');
@@ -115,6 +116,20 @@ function createBaseHinge(){
     plateHingeConstraint.collideConnected = false;
     world.addConstraint(plateHingeConstraint);
     baseHingeConstraint = plateHingeConstraint;
+
+    //Center Cube Tower on Base
+    const cubeTowerHingeConstraint = new CANNON.HingeConstraint(base, cubeTower.body, {
+        pivotA: new CANNON.Vec3(0, 1.5, 0.1), // Center of the top face of the box
+        axisA: new CANNON.Vec3(0, 1, 0), // Axis of rotation for the box
+        pivotB: new CANNON.Vec3(0, -0.5, 0), // Center of the bottom face of the cylinder
+        axisB: new CANNON.Vec3(0, 1, 0), // Axis of rotation for the cylinder
+    });
+    cubeTowerHingeConstraint.collideConnected = false;
+    cubeTowerHingeConstraint.enableMotor();
+    cubeTowerHingeConstraint.setMotorSpeed(1.2);
+    cubeTowerHingeConstraint.setMotorMaxForce(2000);
+    world.addConstraint(cubeTowerHingeConstraint);
+    
 }
 
 function createGondelHinges() {
@@ -137,11 +152,22 @@ function createGondelHinges() {
             });
             gondelHingeConstraint.collideConnected = false;
             world.addConstraint(gondelHingeConstraint);
-            kreuzHingeConstraints.push(gondelHingeConstraint);
+            gondelHingeConstraints.push(gondelHingeConstraint);
             i++
         }
     });
     
+}
+
+
+async function loadCubeTower(){
+    cubeTower = { 
+        model: await loadModel('models/DancerCubeTower.glb'),
+        body: new CANNON.Body({ mass: 200, shape: new CANNON.Box(new CANNON.Vec3(0.2, 0.1, 0.2)) })
+    };
+    scene.add(cubeTower.model);
+    world.addBody(cubeTower.body);
+    loadedclass.add();
 }
 
 async function loadBaseDisc(){
@@ -229,6 +255,7 @@ function syncBodies(){
     gondeln.forEach(gondel => {
         syncObjectWithBody(gondel.gondelBody, gondel.gondelPhysicsBody);
     });
+    syncObjectWithBody(cubeTower.model, cubeTower.body);
 }
 
 function driveBreaker(){
@@ -326,10 +353,11 @@ async function loadModel(path) {
 }
 
 function startFunctions(){
+    loadCubeTower();
     loadGondelModels();
     loadKreuze();
     loadBaseDisc();
-    //loadBackgroundScene();
+    loadBackgroundScene();
     loadHDRI('textures/hdri/nightsky.hdr');
     createSunLight();
 }
