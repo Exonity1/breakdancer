@@ -126,7 +126,7 @@ function createBaseHinge(){
     });
     cubeTowerHingeConstraint.collideConnected = false;
     cubeTowerHingeConstraint.enableMotor();
-    cubeTowerHingeConstraint.setMotorSpeed(1.2);
+    cubeTowerHingeConstraint.setMotorSpeed(1.8);
     cubeTowerHingeConstraint.setMotorMaxForce(2000);
     world.addConstraint(cubeTowerHingeConstraint);
     
@@ -158,7 +158,6 @@ function createGondelHinges() {
     });
     
 }
-
 
 async function loadCubeTower(){
     cubeTower = { 
@@ -286,7 +285,7 @@ function loadHDRI(path) {
         const envMap = pmremGenerator.fromEquirectangular(texture).texture;
         texture.dispose();
         pmremGenerator.dispose();
-        //scene.environment = envMap;
+        scene.environment = envMap;
         scene.background = envMap;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 0.3;
@@ -357,9 +356,9 @@ function startFunctions(){
     loadGondelModels();
     loadKreuze();
     loadBaseDisc();
-    loadBackgroundScene();
+    //loadBackgroundScene();
     loadHDRI('textures/hdri/nightsky.hdr');
-    createSunLight();
+    //createSunLight();
 }
 
 document.getElementById('resetButton').addEventListener('click', resetVelocity);
