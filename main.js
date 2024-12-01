@@ -17,7 +17,7 @@ import { LoaderHelper } from './LoaderHelper.js';
 let lastTime = Date.now(); 
 let deltaTime = 0;
 let fps = 0;
-let loadedclass = new LoaderHelper(23, hideLoadingScreenAndStart);
+let loadedclass = new LoaderHelper(22, hideLoadingScreenAndStart);
 //Intialise the general variables 
 let plateSpeed = 0;
 let gondelSpeed = 0;
