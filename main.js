@@ -304,12 +304,12 @@ function onWindowResize() {
     
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    cameraPOV.aspect = width / height;
-    cameraPOV.updateProjectionMatrix();
+    //cameraPOV.aspect = width / height;
+    //ameraPOV.updateProjectionMatrix();
     
     renderer.setSize(width, height);
     composer.setSize(width, height);
-    composerPOV.setSize(width, height);
+    //composerPOV.setSize(width, height);
     //SSAOPass.setSize(width, height);
     //ssaoPassPOV.setSize(width, height);
     //ssrPass.setSize(width, height);
